@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Peach Capture",
+  "version": "0.1.0",
+  "description": "Capture the LinkedIn job posting I'm viewing, for personal fit scoring.",
+  "action": { "default_popup": "popup.html" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/jobs/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
