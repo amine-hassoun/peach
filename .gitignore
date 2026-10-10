@@ -5,3 +5,4 @@ node_modules/
 .terraform/
 *.tfvars
 infra/build/
+extension/config.js
