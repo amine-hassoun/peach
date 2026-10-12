@@ -1,60 +1,265 @@
-import './style.css'
-import heroImg from './assets/hero.png'
-import javascriptLogo from './assets/javascript.svg'
-import viteLogo from './assets/vite.svg'
-import { setupCounter } from './counter.js'
+import './style.css';
+import '@fontsource-variable/quicksand';
+import '@fontsource-variable/nunito';
 
-document.querySelector('#app').innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${javascriptLogo}" class="framework" alt="JavaScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.js</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+import { summarize, toDay, toISO, LIMIT, WINDOW } from './lib/schengen.js';
+import { localISO } from './lib/today.js';
+import { validateStay } from './lib/validate.js';
+import { esc } from './lib/html.js';
+import { t, tn, setLang, getLang, detectLang, formatDate } from './i18n.js';
+import { renderGauge } from './ui/gauge.js';
+import { renderTimeline } from './ui/timeline.js';
 
-<div class="ticks"></div>
+// Official calculator, linked from the footer. Kept in one place so it is easy to update.
+const EC_URL =
+  'https://home-affairs.ec.europa.eu/policies/schengen/border-crossing/short-stay-calculator-new-version_en';
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-          <img class="button-icon" src="${javascriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+const app = document.getElementById('app');
+const dialog = document.getElementById('stay-dialog');
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
+// In-memory for now: Step 4 adds localStorage, Step 7 adds sync.
+// Each stay: { id, entry, exit | null, note, updatedAt, deleted }
+const state = { stays: [], theme: null, undoId: null };
+let editingId = null;
+let undoTimer = null;
 
-setupCounter(document.querySelector('#counter'))
+const LOGO = `<svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+  <path d="M24 12c-9 0-16 7-16 15 0 8 6 14 16 14s16-6 16-14c0-8-7-15-16-15z" fill="#FFB4A2"/>
+  <path d="M24 12c-5 3-8 8-8 14" stroke="#E5989B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M24 12c0-5 3-8 8-8-1 5-3 8-8 8z" fill="#7BC4A4"/>
+</svg>`;
+
+// ---------- rendering ----------
+
+function heroCard(sum) {
+  let eyebrow = '';
+  let main;
+  let hint = '';
+  if (sum.used > LIMIT) {
+    main = t('hero.over', { n: sum.used - LIMIT });
+  } else if (sum.latestLeave === null) {
+    main = t('hero.none');
+    hint = t('hero.noneHint');
+  } else if (sum.left === 0 && sum.presentToday) {
+    eyebrow = t('hero.lastDay');
+    main = formatDate(sum.latestLeave, 'long');
+  } else {
+    eyebrow = sum.presentToday ? t('hero.stayUntil') : t('hero.enterToday');
+    main = formatDate(sum.latestLeave, 'long');
+  }
+  const gauge = renderGauge({
+    used: sum.used,
+    left: sum.left,
+    label: tn('gauge.left', sum.left),
+    aria: t('gauge.aria', { used: sum.used }),
+  });
+  return `<section class="card hero">
+    <div class="hero__gauge">${gauge}</div>
+    <div class="hero__text">
+      ${eyebrow ? `<p class="eyebrow">${esc(eyebrow)}</p>` : ''}
+      <p class="hero__main">${esc(main)}</p>
+      ${hint ? `<p class="muted">${esc(hint)}</p>` : ''}
+    </div>
+  </section>`;
+}
+
+function timelineCard(today) {
+  const startISO = toISO(toDay(today) - (WINDOW - 1));
+  return `<section class="card">
+    <h2>${t('timeline.title')}</h2>
+    ${renderTimeline({
+      stays: state.stays,
+      todayISO: today,
+      startLabel: esc(formatDate(startISO, 'medium')),
+      todayLabel: esc(t('timeline.today')),
+      aria: esc(t('timeline.aria')),
+    })}
+  </section>`;
+}
+
+function stayRow(s, today) {
+  const start = toDay(s.entry);
+  const end = s.exit ? toDay(s.exit) : toDay(today);
+  const days = Math.max(0, end - start + 1);
+  const range = `${formatDate(s.entry, 'medium')} – ${s.exit ? formatDate(s.exit, 'medium') : t('stays.ongoing')}`;
+  const note = s.note ? ` · ${esc(s.note)}` : '';
+  return `<li class="stay">
+    <div class="stay__main">
+      <p class="stay__range">${esc(range)}</p>
+      <p class="muted">${esc(tn('stays.days', days))}${note}</p>
+    </div>
+    <div class="stay__actions">
+      <button class="btn btn--ghost btn--small" data-action="edit" data-id="${esc(s.id)}">${t('stays.edit')}</button>
+      <button class="btn btn--ghost btn--small" data-action="delete" data-id="${esc(s.id)}">${t('stays.delete')}</button>
+    </div>
+  </li>`;
+}
+
+function staysCard(today) {
+  const visible = state.stays
+    .filter((s) => !s.deleted)
+    .sort((a, b) => b.entry.localeCompare(a.entry));
+  const body = visible.length
+    ? `<ul class="stay-list">${visible.map((s) => stayRow(s, today)).join('')}</ul>`
+    : `<p class="empty">${t('stays.empty')}</p>`;
+  return `<section class="card">
+    <div class="card__head">
+      <h2>${t('stays.title')}</h2>
+      <button class="btn btn--small" data-action="add">+ ${t('stays.add')}</button>
+    </div>
+    ${body}
+  </section>`;
+}
+
+function render() {
+  const today = localISO();
+  const sum = summarize(state.stays, today);
+  document.title = `${t('app.name')} 🍑`;
+  app.innerHTML = `
+    <header class="topbar">
+      <div class="brand">
+        ${LOGO}
+        <div><h1>${t('app.name')}</h1><p class="muted">${t('app.tagline')}</p></div>
+      </div>
+      <div class="topbar__actions">
+        <button class="btn btn--ghost btn--small" data-action="toggle-lang">${t('lang.switchTo')}</button>
+        <button class="btn btn--ghost btn--small" data-action="toggle-theme" aria-label="${esc(t('theme.toggle'))}">◐</button>
+      </div>
+    </header>
+    <main>
+      ${heroCard(sum)}
+      ${timelineCard(today)}
+      ${staysCard(today)}
+    </main>
+    <footer class="footer">
+      <p class="muted">${t('footer.disclaimer')}</p>
+      <a href="${EC_URL}" target="_blank" rel="noopener noreferrer">${t('footer.official')}</a>
+    </footer>
+    ${
+      state.undoId
+        ? `<div class="toast" role="status"><span>${t('stays.deleted')}</span>
+           <button class="btn btn--ghost btn--small" data-action="undo">${t('stays.undo')}</button></div>`
+        : ''
+    }`;
+}
+
+// ---------- add / edit form ----------
+
+function formHtml(stay) {
+  const v = stay ?? { entry: '', exit: '', note: '' };
+  const open = stay ? stay.exit === null : false;
+  return `<form class="stay-form" novalidate>
+    <h2>${t(stay ? 'form.editTitle' : 'form.addTitle')}</h2>
+    <label>${t('form.entry')}<input type="date" name="entry" value="${esc(v.entry)}" required></label>
+    <label class="check"><input type="checkbox" name="ongoing" ${open ? 'checked' : ''}> ${t('form.stillThere')}</label>
+    <label>${t('form.exit')}<input type="date" name="exit" value="${esc(v.exit ?? '')}" ${open ? 'disabled' : ''}></label>
+    <label>${t('form.note')}<input type="text" name="note" maxlength="200" placeholder="${esc(t('form.notePlaceholder'))}" value="${esc(v.note)}"></label>
+    <p class="form-error" role="alert" hidden></p>
+    <div class="actions">
+      <button type="button" class="btn btn--ghost" data-action="close-form">${t('form.cancel')}</button>
+      <button type="submit" class="btn">${t('form.save')}</button>
+    </div>
+  </form>`;
+}
+
+function openForm(id) {
+  editingId = id ?? null;
+  const stay = id ? state.stays.find((s) => s.id === id) : null;
+  dialog.innerHTML = formHtml(stay);
+  dialog.showModal();
+}
+
+dialog.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const ongoing = f.get('ongoing') === 'on';
+  const entry = String(f.get('entry') || '');
+  const exit = ongoing ? null : String(f.get('exit') || '');
+  const note = String(f.get('note') || '').trim().slice(0, 200);
+
+  const errKey = validateStay({ entry, exit, ongoing }, localISO());
+  if (errKey) {
+    const p = dialog.querySelector('.form-error');
+    p.textContent = t(errKey);
+    p.hidden = false;
+    return;
+  }
+
+  const now = new Date().toISOString();
+  if (editingId) {
+    Object.assign(state.stays.find((s) => s.id === editingId), { entry, exit, note, updatedAt: now });
+  } else {
+    state.stays.push({ id: crypto.randomUUID(), entry, exit, note, updatedAt: now, deleted: false });
+  }
+  dialog.close();
+  render();
+});
+
+dialog.addEventListener('change', (e) => {
+  if (e.target.name === 'ongoing') dialog.querySelector('[name="exit"]').disabled = e.target.checked;
+});
+
+// Click on the dim backdrop (the <dialog> element itself) closes the form.
+dialog.addEventListener('click', (e) => {
+  if (e.target === dialog) dialog.close();
+});
+
+// ---------- actions ----------
+
+function deleteStay(id) {
+  const s = state.stays.find((x) => x.id === id);
+  if (!s) return;
+  s.deleted = true; // tombstone, not removal: Step 7's sync merge needs it
+  s.updatedAt = new Date().toISOString();
+  state.undoId = id;
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => {
+    state.undoId = null;
+    render();
+  }, 6000);
+  render();
+}
+
+function undoDelete() {
+  const s = state.stays.find((x) => x.id === state.undoId);
+  if (s) {
+    s.deleted = false;
+    s.updatedAt = new Date().toISOString();
+  }
+  state.undoId = null;
+  clearTimeout(undoTimer);
+  render();
+}
+
+function toggleTheme() {
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = (state.theme ?? (systemDark ? 'dark' : 'light')) === 'dark';
+  state.theme = isDark ? 'light' : 'dark';
+  document.documentElement.dataset.theme = state.theme;
+}
+
+function toggleLang() {
+  setLang(getLang() === 'en' ? 'ka' : 'en');
+  render();
+}
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const { action, id } = el.dataset;
+  if (action === 'add') openForm(null);
+  else if (action === 'edit') openForm(id);
+  else if (action === 'delete') deleteStay(id);
+  else if (action === 'undo') undoDelete();
+  else if (action === 'toggle-theme') toggleTheme();
+  else if (action === 'toggle-lang') toggleLang();
+  else if (action === 'close-form') dialog.close();
+});
+
+// Reopening the tab on a new day must not keep showing yesterday's numbers.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) render();
+});
+
+setLang(detectLang());
+render();
