@@ -1,0 +1,17 @@
+{
+  "name": "peach",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vite": "^8.3.0",
+    "vitest": "^5.0.3"
+  }
+}
