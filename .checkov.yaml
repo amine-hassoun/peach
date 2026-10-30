@@ -1,0 +1,15 @@
+# Accepted by design (zero-cost, single-user): triage against the real checkov output, then trim.
+framework: [terraform]
+directory: [infra]
+skip-check:
+  - CKV_AWS_115  # reserved concurrency: this account's total limit is 10, no reservation possible
+  - CKV_AWS_116  # DLQ: synchronous HTTP function, nothing to dead-letter
+  - CKV_AWS_117  # VPC: intentionally outside a VPC (no NAT Gateway by design)
+  - CKV_AWS_173  # env var CMK: the only variable is a SHA-256 hash, not a secret
+  - CKV_AWS_272  # code signing: single-owner private repo
+  - CKV_AWS_258  # Function URL AuthType NONE: required, the token guards /api in-app
+  - CKV_AWS_50   # X-Ray: not needed at this scale
+  - CKV_AWS_28   # DynamoDB PITR: billed; JSON export is the backup
+  - CKV_AWS_119  # DynamoDB CMK: billed
+  - CKV_AWS_158  # log group CMK: billed
+  - CKV_AWS_338  # 1-year log retention: 14 days is enough

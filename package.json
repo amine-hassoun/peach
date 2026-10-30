@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "package": "vite build && sh scripts/package.sh"
   },
   "devDependencies": {
     "jsdom": "^30.1.2",

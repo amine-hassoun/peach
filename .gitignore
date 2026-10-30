@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# peach additions
+build/
+infra/.terraform/
+infra/peach-sync.zip
+infra/*.tfstate*
+infra/*.tfvars
+infra/tfplan
