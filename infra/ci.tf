@@ -94,9 +94,9 @@ resource "aws_iam_role_policy" "ci" {
         Condition = { StringEquals = { "iam:PassedToService" = "lambda.amazonaws.com" } }
       },
       {
-        Sid    = "ReadOwnRoleForRefresh"
-        Effect = "Allow"
-        Action = ["iam:GetRole", "iam:ListRolePolicies", "iam:GetRolePolicy", "iam:ListAttachedRolePolicies", "iam:ListInstanceProfilesForRole"]
+        Sid      = "ReadOwnRoleForRefresh"
+        Effect   = "Allow"
+        Action   = ["iam:GetRole", "iam:ListRolePolicies", "iam:GetRolePolicy", "iam:ListAttachedRolePolicies", "iam:ListInstanceProfilesForRole"]
         Resource = "arn:aws:iam::${local.acct}:role/peach-ci"
       },
       {
