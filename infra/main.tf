@@ -3,6 +3,7 @@ data "aws_region" "current" {}
 
 # ---------- data: one item, provisioned 1/1 (Always Free pool, never on-demand) ----------
 resource "aws_dynamodb_table" "stays" {
+  #checkov:skip=CKV2_AWS_16: fixed 1/1 provisioned capacity keeps the account inside the shared 25/25 Always Free pool; auto scaling would add cost surface
   name           = "peach-stays"
   billing_mode   = "PROVISIONED"
   read_capacity  = 1
@@ -92,6 +93,7 @@ resource "aws_lambda_function_url" "sync" {
 
 # A Function URL with AuthType NONE needs BOTH statements, or it returns a persistent 403.
 resource "aws_lambda_permission" "url" {
+  #checkov:skip=CKV_AWS_301: public Function URL by design; the handler returns 401 before any database call unless the secret token hash matches
   statement_id           = "AllowPublicInvokeFunctionUrl"
   action                 = "lambda:InvokeFunctionUrl"
   function_name          = aws_lambda_function.sync.function_name
@@ -100,6 +102,7 @@ resource "aws_lambda_permission" "url" {
 }
 
 resource "aws_lambda_permission" "invoke" {
+  #checkov:skip=CKV_AWS_301: second statement a public Function URL requires (InvokeFunction alongside InvokeFunctionUrl)
   statement_id  = "AllowPublicInvokeFunction"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.sync.function_name
