@@ -1,0 +1,94 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Whole-workflow group: plan takes the shared state lock too, so runs queue instead of colliding.
+concurrency:
+  group: terraform-state
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test -- --run
+      - run: npm run build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install boto3
+      - run: python -m unittest discover -s lambda -p "test_*.py"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  terraform:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      TF_VAR_token_sha256: ${{ secrets.PEACH_TOKEN_SHA256 }}
+      TF_VAR_alert_email: ${{ secrets.PEACH_ALERT_EMAIL }}
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Package Lambda bundle
+        working-directory: .
+        run: sh scripts/package.sh
+
+      - name: Guard against non-Always-Free resource types
+        run: |
+          FORBIDDEN='aws_nat_gateway|aws_lb|aws_elb|aws_db_instance|aws_db_cluster|aws_elasticache_cluster|aws_elasticache_replication_group|aws_redshift_cluster|aws_instance|aws_eks_cluster'
+          if grep -rEl "resource \"($FORBIDDEN)\"" --include="*.tf" .; then
+            echo "Forbidden resource type found - this project is Always-Free-only by design."
+            exit 1
+          fi
+
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: eu-west-3
+
+      - run: terraform fmt -check -recursive
+      - run: terraform init -input=false
+      - run: terraform validate
+
+      - name: checkov
+        working-directory: .
+        run: pip install checkov && checkov --config-file .checkov.yaml
+
+      - name: Plan
+        run: terraform plan -input=false -no-color -out=tfplan | tee plan.txt
+
+      - name: Plan to job summary
+        if: always()
+        run: |
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -n 60 plan.txt >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Apply (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: terraform apply -input=false -auto-approve tfplan

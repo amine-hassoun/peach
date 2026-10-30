@@ -2,13 +2,19 @@ import './style.css';
 import '@fontsource-variable/quicksand';
 import '@fontsource-variable/nunito';
 
-import { summarize, toDay, toISO, LIMIT, WINDOW } from './lib/schengen.js';
+import { summarize, maxStay, toDay, toISO, LIMIT, WINDOW } from './lib/schengen.js';
 import { localISO } from './lib/today.js';
 import { validateStay } from './lib/validate.js';
 import { esc } from './lib/html.js';
 import { t, tn, setLang, getLang, detectLang, formatDate } from './i18n.js';
 import { renderGauge } from './ui/gauge.js';
 import { renderTimeline } from './ui/timeline.js';
+import { captureTokenFromHash } from './lib/store.js';
+import { startPersistence } from './lib/persistence.js';
+import { mountPlanner } from './ui/planner.js';
+import { mountSettings } from './ui/settings.js';
+import { registerSW } from './pwa.js';
+import './ui/extra.css';
 
 // Official calculator, linked from the footer. Kept in one place so it is easy to update.
 const EC_URL =
@@ -112,6 +118,7 @@ function staysCard(today) {
 }
 
 function render() {
+  persistence.changed();
   const today = localISO();
   const sum = summarize(state.stays, today);
   document.title = `${t('app.name')} 🍑`;
@@ -260,6 +267,20 @@ document.addEventListener('click', (e) => {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) render();
 });
+
+captureTokenFromHash(); // before any rendering
+
+const persistence = startPersistence({
+  getStays: () => state.stays,
+  setStays: (s) => { state.stays = s; render(); },
+});
+mountPlanner(document.getElementById('planner'), {
+  getStays: () => state.stays, today: localISO, maxStay, t, formatDate,
+});
+mountSettings(document.getElementById('settings'), {
+  persistence, t, origin: location.origin,
+});
+registerSW();
 
 setLang(detectLang());
 render();
