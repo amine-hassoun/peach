@@ -30,7 +30,7 @@ jobs:
           python-version: "3.13"
       - run: pip install boto3
       - run: python -m unittest discover -s lambda -p "test_*.py"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist
