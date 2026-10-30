@@ -25,3 +25,9 @@ variable "state_bucket" {
   type        = string
   default     = "amine-hassoun-aws-terraform-infra-state"
 }
+
+variable "github_oidc_subject_repo" {
+  description = "Repo as it appears in GitHub's OIDC sub claim (ID-based format, from the token itself)."
+  type        = string
+  default     = "amine-hassoun@294192393/peach@1415311249"
+}

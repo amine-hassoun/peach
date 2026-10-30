@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "assume_ci" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/main", "repo:${var.github_repo}:pull_request"]
+      values   = ["repo:${var.github_oidc_subject_repo}:ref:refs/heads/main", "repo:${var.github_oidc_subject_repo}:pull_request"]
     }
   }
 }
