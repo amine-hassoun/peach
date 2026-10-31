@@ -13,7 +13,12 @@ describe('planner', () => {
     const m = {};
     return { getItem: (k) => m[k] ?? null, setItem: (k, v) => { m[k] = v; } };
   };
-  const mount = (stays = []) => {
+  beforeEach(() => {
+    // jsdom has no <dialog> behaviour.
+    HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
+    HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
+  });
+  const mount = (stays = [], storage = memory()) => {
     const el = document.createElement('section');
     document.body.append(el);
     mountPlanner(el, {
@@ -21,38 +26,70 @@ describe('planner', () => {
       today: () => '2026-10-31',
       t, tn,
       formatDate: (d) => d,
-      storage: memory(),
+      storage,
     });
     return el;
   };
-  const setEntry = (el, value, name = 'entry') => {
-    const input = el.querySelector(`input[name="${name}"]`);
-    input.value = value;
-    input.dispatchEvent(new Event('change', { bubbles: true }));
+  const dialog = () => document.querySelector('dialog');
+  const submit = ({ entry = '', exit = '', note = '' }) => {
+    const form = dialog().querySelector('form');
+    form.elements.entry.value = entry;
+    form.elements.exit.value = exit;
+    form.elements.note.value = note;
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
   };
 
-  it('starts with a hint, and + adds a trip row', () => {
+  it('starts with a hint; + opens the popup instead of adding a blank row', () => {
     const el = mount();
     expect(el.textContent).toContain('trips.hint');
     el.querySelector('[data-trip="add"]').click();
-    expect(el.querySelectorAll('.trip').length).toBe(1);
+    expect(dialog().hasAttribute('open')).toBe(true);
+    expect(dialog().textContent).toContain('trips.newTitle');
+    expect(el.querySelectorAll('.trip').length).toBe(0);
   });
 
-  it('shows the maximum stay once an entry date is set', () => {
+  it('requires an entry date, and rejects an exit before the entry', () => {
     const el = mount();
     el.querySelector('[data-trip="add"]').click();
-    setEntry(el, '2026-11-01');
+    submit({});
+    expect(dialog().querySelector('.form-error').textContent).toBe('err.required');
+    submit({ entry: '2026-11-10', exit: '2026-11-05' });
+    expect(dialog().querySelector('.form-error').textContent).toBe('err.exitBefore');
+    expect(el.querySelectorAll('.trip').length).toBe(0);
+  });
+
+  it('saving with only an entry date shows the maximum stay', () => {
+    const el = mount();
+    el.querySelector('[data-trip="add"]').click();
+    submit({ entry: '2026-11-01', note: 'Lisbon' });
+    expect(dialog().hasAttribute('open')).toBe(false);
     expect(el.querySelector('.trip__result').textContent).toContain('trips.max');
+    expect(el.querySelector('.trip').textContent).toContain('Lisbon');
   });
 
   it('flags a trip that goes over the limit, and supports several trips', () => {
     const el = mount([{ entry: '2026-08-03', exit: '2026-10-31', deleted: false }]); // 90 days used
     el.querySelector('[data-trip="add"]').click();
+    submit({ entry: '2026-11-01', exit: '2026-11-05' });
     el.querySelector('[data-trip="add"]').click();
+    submit({ entry: '2027-06-01' });
     expect(el.querySelectorAll('.trip').length).toBe(2);
-    setEntry(el, '2026-11-01');
-    setEntry(el, '2026-11-05', 'exit');
     expect(el.querySelector('.trip__result').textContent).toContain('trips.over');
+  });
+
+  it('edits and removes a trip, and persists to storage', () => {
+    const storage = memory();
+    const el = mount([], storage);
+    el.querySelector('[data-trip="add"]').click();
+    submit({ entry: '2026-11-01', exit: '2026-11-05' });
+    el.querySelector('[data-trip="edit"]').click();
+    expect(dialog().querySelector('[name="entry"]').value).toBe('2026-11-01');
+    submit({ entry: '2026-11-02', exit: '2026-11-06' });
+    expect(el.querySelectorAll('.trip').length).toBe(1);
+    expect(JSON.parse(storage.getItem('peach.trips'))[0].entry).toBe('2026-11-02');
+    el.querySelector('[data-trip="remove"]').click();
+    expect(el.querySelectorAll('.trip').length).toBe(0);
+    expect(JSON.parse(storage.getItem('peach.trips'))).toEqual([]);
   });
 });
 
