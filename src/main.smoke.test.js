@@ -117,6 +117,13 @@ describe('peach UI', () => {
     window.dispatchEvent(new Event('resize'));
     expect(root.classList.contains('scenic')).toBe(false);
   });
+
+  it('remembers the chosen theme for next time', () => {
+    click($('[data-action="toggle-theme"]')); // -> dark
+    expect(localStorage.getItem('peach.theme')).toBe('dark');
+    click($('[data-action="toggle-theme"]')); // -> light
+    expect(localStorage.getItem('peach.theme')).toBe('light');
+  });
 });
 
 function $$(sel) {

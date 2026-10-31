@@ -10,6 +10,7 @@ import { esc } from './lib/html.js';
 import { t, tn, setLang, getLang, detectLang, formatDate } from './i18n.js';
 import { renderGauge } from './ui/gauge.js';
 import { captureTokenFromHash } from './lib/store.js';
+import { loadTheme, saveTheme } from './lib/theme.js';
 import { startPersistence } from './lib/persistence.js';
 import { mountPlanner } from './ui/planner.js';
 import { registerSW } from './pwa.js';
@@ -25,7 +26,8 @@ let planner = null;
 
 // In-memory for now: Step 4 adds localStorage, Step 7 adds sync.
 // Each stay: { id, entry, exit | null, note, updatedAt, deleted }
-const state = { stays: [], theme: null, undoId: null };
+const state = { stays: [], theme: loadTheme(), undoId: null };
+if (state.theme) document.documentElement.dataset.theme = state.theme; // the theme chosen last time
 let editingId = null;
 let undoTimer = null;
 
@@ -315,6 +317,7 @@ function toggleTheme() {
   const isDark = (state.theme ?? (systemDark ? 'dark' : 'light')) === 'dark';
   state.theme = isDark ? 'light' : 'dark';
   document.documentElement.dataset.theme = state.theme;
+  saveTheme(state.theme);
   syncScenic();
 }
 
