@@ -1,21 +1,26 @@
-/* Trip planner: the box itself comes from the shared .card class. */
-.planner input[type='date'] {
-  padding: .6rem .8rem;
-  border-radius: 14px;
-  border: 2px solid var(--rose, #e5989b);
-  font: inherit;
-  max-width: 100%;
+/* Trip planner: the box itself comes from the shared .card class.
+   The add/edit popup reuses .dialog and .stay-form from style.css. */
+.trip-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.trip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
 }
-.planner-result {
-  min-height: 1.4em;
-  margin: .6rem 0;
-}
+.trip:first-child { border-top: 0; }
+.trip__range { font-weight: 800; }
+.trip__actions { display: flex; gap: 6px; flex-shrink: 0; }
+.trip__result { margin-top: 4px; font-size: .92rem; }
+.trip__result.is-ok { color: var(--ring-ok); font-weight: 700; }
+.trip__result.is-over { color: var(--ring-low); font-weight: 700; }
+.stay-form .hint { font-weight: 400; font-size: .85rem; color: var(--muted); }
 
-.trip { padding: .75rem 0; border-top: 1px solid rgba(255, 255, 255, .08); }
-.trip__inputs { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; }
-.trip__inputs label { display: flex; flex-direction: column; gap: .25rem; font-size: .8rem; }
-.trip__result { margin: .5rem 0 0; }
-.trip__result.is-ok { color: #b5ead7; }
-.trip__result.is-over { color: var(--rose, #e5989b); font-weight: 700; }
 .release-list { list-style: none; margin: .5rem 0 0; padding: 0; }
-.release-list li { display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0; border-top: 1px solid rgba(255, 255, 255, .08); }
+.release-list li { display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0; border-top: 1px solid var(--border); }
+.release-list li:first-child { border-top: 0; }
+
+@media (max-width: 420px) {
+  .trip { flex-direction: column; align-items: flex-start; }
+}

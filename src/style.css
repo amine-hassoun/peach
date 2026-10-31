@@ -195,9 +195,23 @@ a {
 
 /* ---------- hero + gauge ---------- */
 .hero {
-  flex-direction: row;
+  gap: 16px;
+}
+.hero__top {
+  display: flex;
   align-items: center;
   gap: 20px;
+}
+.hero__next {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  text-align: left;
+}
+.hero__next-title {
+  font-weight: 800;
 }
 .hero__gauge {
   flex: 0 0 140px;
@@ -415,7 +429,7 @@ a {
 
 /* ---------- small screens + motion ---------- */
 @media (max-width: 420px) {
-  .hero {
+  .hero__top {
     flex-direction: column;
     text-align: center;
   }

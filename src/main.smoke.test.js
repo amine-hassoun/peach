@@ -28,6 +28,13 @@ describe('peach UI', () => {
     await import('./main.js');
   });
 
+  it('puts the trip planner above the stays list', () => {
+    const planner = $('#planner');
+    const stays = $('[data-action="add"]').closest('.card');
+    expect(planner.compareDocumentPosition(stays) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect($('.hero__next')).toBeNull(); // nothing to come back yet
+  });
+
   it('starts empty with 90 days left', () => {
     expect($('.hero')).not.toBeNull();
     expect($('.gauge__num').textContent).toBe('90');
@@ -50,6 +57,14 @@ describe('peach UI', () => {
     expect($('.stay__range').textContent).toContain('3 Oct 2026');
     expect($('.stay .muted').textContent).toContain('10 days');
     expect($('.stay b')).toBeNull(); // the <b> was escaped, not rendered
+  });
+
+  it('the days-left card shows when days come back and how many', () => {
+    // Oct 3-12 leave the window from 1 Apr 2027 (+10 days, one per date through 10 Apr).
+    const next = $('.hero .hero__next');
+    expect(next).not.toBeNull();
+    expect(next.textContent).toContain('1 Apr 2027');
+    expect(next.textContent).toContain('+10 days');
   });
 
   it('switches to Georgian and back', () => {

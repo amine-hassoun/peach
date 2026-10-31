@@ -89,6 +89,12 @@ export const messages = {
     'trips.fits': 'Fits',
     'trips.over': 'Over by {n}',
     'trips.hint': 'Add a trip to see how long you can stay.',
+    'trips.newTitle': 'New trip',
+    'trips.editTitle': 'Edit trip',
+    'trips.exitOptional': 'Exit date (optional)',
+    'trips.exitHint': 'Leave empty to see the longest stay possible.',
+    'trips.notePlaceholder': 'e.g. Summer in Lisbon',
+    'trips.from': 'From {date}',
   },
 
   ka: {
@@ -178,6 +184,12 @@ export const messages = {
     'trips.fits': 'ეტევა',
     'trips.over': 'ლიმიტს აჭარბებს: {n}',
     'trips.hint': 'დაამატე მოგზაურობა, რომ ნახო რამდენ ხანს შეგიძლია დარჩენა.',
+    'trips.newTitle': 'ახალი მოგზაურობა',
+    'trips.editTitle': 'მოგზაურობის რედაქტირება',
+    'trips.exitOptional': 'გასვლის თარიღი (არასავალდებულო)',
+    'trips.exitHint': 'დატოვე ცარიელი, რომ ნახო მაქსიმალური ხანგრძლივობა.',
+    'trips.notePlaceholder': 'მაგ. ზაფხული ლისაბონში',
+    'trips.from': '{date}-დან',
   },
 };
 

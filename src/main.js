@@ -18,6 +18,7 @@ import './ui/extra.css';
 const app = document.getElementById('app');
 const dialog = document.getElementById('stay-dialog');
 const plannerEl = document.getElementById('planner');
+const tripDialog = document.getElementById('trip-dialog');
 let planner = null;
 
 // In-memory for now: Step 4 adds localStorage, Step 7 adds sync.
@@ -34,7 +35,7 @@ const LOGO = `<svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
 
 // ---------- rendering ----------
 
-function heroCard(sum) {
+function heroCard(sum, today) {
   let eyebrow = '';
   let main;
   let hint = '';
@@ -57,12 +58,15 @@ function heroCard(sum) {
     aria: t('gauge.aria', { used: sum.used }),
   });
   return `<section class="card hero">
-    <div class="hero__gauge">${gauge}</div>
-    <div class="hero__text">
-      ${eyebrow ? `<p class="eyebrow">${esc(eyebrow)}</p>` : ''}
-      <p class="hero__main">${esc(main)}</p>
-      ${hint ? `<p class="muted">${esc(hint)}</p>` : ''}
+    <div class="hero__top">
+      <div class="hero__gauge">${gauge}</div>
+      <div class="hero__text">
+        ${eyebrow ? `<p class="eyebrow">${esc(eyebrow)}</p>` : ''}
+        <p class="hero__main">${esc(main)}</p>
+        ${hint ? `<p class="muted">${esc(hint)}</p>` : ''}
+      </div>
     </div>
+    ${releaseBlock(today)}
   </section>`;
 }
 
@@ -84,23 +88,23 @@ function stayRow(s, today) {
   </li>`;
 }
 
-function releaseCard(today) {
+// When the next days leave the 180-day window, and how many come back (assuming no new stays).
+function releaseBlock(today) {
   const runs = upcomingReleases(state.stays, today, 3);
-  const body = runs.length
-    ? `<ul class="release-list">${runs
-        .map((r) => {
-          const when = r.from === r.to
-            ? formatDate(r.from, 'long')
-            : `${formatDate(r.from, 'medium')} – ${formatDate(r.to, 'medium')}`;
-          return `<li><span>${esc(when)}</span><strong>+${esc(tn('stays.days', r.days))}</strong></li>`;
-        })
-        .join('')}</ul>`
-    : `<p class="empty">${esc(t('rollover.none'))}</p>`;
-  return `<section class="card">
-    <h2>${t('rollover.title')}</h2>
+  if (!runs.length) return '';
+  const items = runs
+    .map((r) => {
+      const when = r.from === r.to
+        ? formatDate(r.from, 'long')
+        : `${formatDate(r.from, 'medium')} – ${formatDate(r.to, 'medium')}`;
+      return `<li><span>${esc(when)}</span><strong>+${esc(tn('stays.days', r.days))}</strong></li>`;
+    })
+    .join('');
+  return `<div class="hero__next">
+    <p class="hero__next-title">${t('rollover.title')}</p>
     <p class="muted">${t('rollover.note')}</p>
-    ${body}
-  </section>`;
+    <ul class="release-list">${items}</ul>
+  </div>`;
 }
 
 function staysCard(today) {
@@ -163,9 +167,9 @@ function renderApp() {
       </div>
     </header>
     <main>
-      ${heroCard(sum)}
-      ${staysCard(today)}
+      ${heroCard(sum, today)}
       <div id="planner-slot"></div>
+      ${staysCard(today)}
     </main>
     ${
       state.undoId
@@ -303,7 +307,7 @@ persistence = startPersistence({
   setStays: (s) => { state.stays = s; render(); },
 });
 planner = mountPlanner(plannerEl, {
-  getStays: () => state.stays, today: localISO, t, tn, formatDate,
+  getStays: () => state.stays, today: localISO, t, tn, formatDate, dialog: tripDialog,
 });
 registerSW();
 
