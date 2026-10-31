@@ -7,31 +7,52 @@ beforeEach(() => { document.body.innerHTML = '<div id="root"></div>'; });
 const root = () => document.getElementById('root');
 
 describe('planner', () => {
-  const base = { getStays: () => [], today: () => '2026-06-01', formatDate: (s) => `D(${s})` };
-  it('shows a hint until a date is chosen, then the result', () => {
-    const maxStay = vi.fn(() => ({ days: 42, lastDay: '2026-07-12' }));
-    mountPlanner(root(), { ...base, maxStay });
-    expect(root().textContent).toContain('Pick an entry date');
-    const input = root().querySelector('input');
-    input.value = '2026-07-01';
-    input.dispatchEvent(new Event('input'));
-    expect(maxStay).toHaveBeenCalledWith([], '2026-07-01', '2026-06-01');
-    expect(root().querySelector('.planner-result').textContent).toBe('You can stay up to 42 days, until D(2026-07-12).');
+  const t = (k) => k;
+  const tn = (k, n) => `${n}`;
+  const memory = () => {
+    const m = {};
+    return { getItem: (k) => m[k] ?? null, setItem: (k, v) => { m[k] = v; } };
+  };
+  const mount = (stays = []) => {
+    const el = document.createElement('section');
+    document.body.append(el);
+    mountPlanner(el, {
+      getStays: () => stays,
+      today: () => '2026-10-31',
+      t, tn,
+      formatDate: (d) => d,
+      storage: memory(),
+    });
+    return el;
+  };
+  const setEntry = (el, value, name = 'entry') => {
+    const input = el.querySelector(`input[name="${name}"]`);
+    input.value = value;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+
+  it('starts with a hint, and + adds a trip row', () => {
+    const el = mount();
+    expect(el.textContent).toContain('trips.hint');
+    el.querySelector('[data-trip="add"]').click();
+    expect(el.querySelectorAll('.trip').length).toBe(1);
   });
-  it('shows the no-days message and refresh() recomputes', () => {
-    let days = 0;
-    const p = mountPlanner(root(), { ...base, maxStay: () => ({ days, lastDay: null }) });
-    const input = root().querySelector('input');
-    input.value = '2026-07-01';
-    input.dispatchEvent(new Event('input'));
-    expect(root().textContent).toContain('No days available');
-    days = 5;
-    p.refresh();
-    expect(root().textContent).toContain('5 days');
+
+  it('shows the maximum stay once an entry date is set', () => {
+    const el = mount();
+    el.querySelector('[data-trip="add"]').click();
+    setEntry(el, '2026-11-01');
+    expect(el.querySelector('.trip__result').textContent).toContain('trips.max');
   });
-  it('uses translations when provided', () => {
-    mountPlanner(root(), { ...base, maxStay: () => ({ days: 0 }), t: (k) => (k === 'planner.title' ? 'დაგეგმვა' : k) });
-    expect(root().querySelector('h2').textContent).toBe('დაგეგმვა');
+
+  it('flags a trip that goes over the limit, and supports several trips', () => {
+    const el = mount([{ entry: '2026-08-03', exit: '2026-10-31', deleted: false }]); // 90 days used
+    el.querySelector('[data-trip="add"]').click();
+    el.querySelector('[data-trip="add"]').click();
+    expect(el.querySelectorAll('.trip').length).toBe(2);
+    setEntry(el, '2026-11-01');
+    setEntry(el, '2026-11-05', 'exit');
+    expect(el.querySelector('.trip__result').textContent).toContain('trips.over');
   });
 });
 

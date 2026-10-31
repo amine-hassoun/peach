@@ -2,7 +2,8 @@ import './style.css';
 import '@fontsource-variable/quicksand';
 import '@fontsource-variable/nunito';
 
-import { summarize, maxStay, toDay, LIMIT } from './lib/schengen.js';
+import { summarize, toDay, LIMIT } from './lib/schengen.js';
+import { upcomingReleases } from './lib/trips.js';
 import { localISO } from './lib/today.js';
 import { validateStay } from './lib/validate.js';
 import { esc } from './lib/html.js';
@@ -17,6 +18,7 @@ import './ui/extra.css';
 const app = document.getElementById('app');
 const dialog = document.getElementById('stay-dialog');
 const plannerEl = document.getElementById('planner');
+let planner = null;
 
 // In-memory for now: Step 4 adds localStorage, Step 7 adds sync.
 // Each stay: { id, entry, exit | null, note, updatedAt, deleted }
@@ -82,6 +84,25 @@ function stayRow(s, today) {
   </li>`;
 }
 
+function releaseCard(today) {
+  const runs = upcomingReleases(state.stays, today, 3);
+  const body = runs.length
+    ? `<ul class="release-list">${runs
+        .map((r) => {
+          const when = r.from === r.to
+            ? formatDate(r.from, 'long')
+            : `${formatDate(r.from, 'medium')} – ${formatDate(r.to, 'medium')}`;
+          return `<li><span>${esc(when)}</span><strong>+${esc(tn('stays.days', r.days))}</strong></li>`;
+        })
+        .join('')}</ul>`
+    : `<p class="empty">${esc(t('rollover.none'))}</p>`;
+  return `<section class="card">
+    <h2>${t('rollover.title')}</h2>
+    <p class="muted">${t('rollover.note')}</p>
+    ${body}
+  </section>`;
+}
+
 function staysCard(today) {
   const visible = state.stays
     .filter((s) => !s.deleted)
@@ -127,7 +148,6 @@ window.addEventListener('unhandledrejection', (e) => showFatal(e.reason));
 
 function renderApp() {
   persistence?.changed();
-  persistence.changed();
   const today = localISO();
   const sum = summarize(state.stays, today);
   document.title = `${t('app.name')} 🍑`;
@@ -155,6 +175,7 @@ function renderApp() {
     }`;
   const slot = document.getElementById('planner-slot');
   if (slot && plannerEl) slot.replaceWith(plannerEl);
+    planner?.refresh();
 }
 
 // ---------- add / edit form ----------
@@ -281,8 +302,8 @@ persistence = startPersistence({
   getStays: () => state.stays,
   setStays: (s) => { state.stays = s; render(); },
 });
-mountPlanner(document.getElementById('planner'), {
-  getStays: () => state.stays, today: localISO, maxStay, t, formatDate,
+planner = mountPlanner(plannerEl, {
+  getStays: () => state.stays, today: localISO, t, tn, formatDate,
 });
 registerSW();
 
