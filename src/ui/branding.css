@@ -1,0 +1,42 @@
+/* Theme-specific branding:
+   - light mode: the peach plushie is the logo (top left)
+   - dark mode:  the original drawn peach logo, plus a handwritten hint next to the theme button
+   Dark mode is detected the same way as in style.css: the system setting unless the user picked a theme. */
+
+/* ---- logo ---- */
+.logo--svg { display: none; }
+.logo--plush {
+  display: block;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  background: url('../assets/peach_logo.webp') center / contain no-repeat;
+}
+
+/* ---- handwritten hint: dark mode, wide windows only ---- */
+.topbar__actions [data-action='toggle-theme'] { position: relative; }
+.topbar__actions [data-action='toggle-theme']::after { display: none; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .logo--svg { display: block; }
+  :root:not([data-theme='light']) .logo--plush { display: none; }
+}
+:root[data-theme='dark'] .logo--svg { display: block; }
+:root[data-theme='dark'] .logo--plush { display: none; }
+
+@media (min-width: 1100px) and (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .topbar__actions [data-action='toggle-theme']::after { display: block; }
+}
+@media (min-width: 1100px) {
+  :root[data-theme='dark'] .topbar__actions [data-action='toggle-theme']::after { display: block; }
+}
+.topbar__actions [data-action='toggle-theme']::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(100% - 4px);
+  width: 272px;
+  height: 278px;
+  background: url('../assets/surprise_note.webp') no-repeat;
+  pointer-events: none;
+}
