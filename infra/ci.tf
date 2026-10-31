@@ -87,6 +87,27 @@ resource "aws_iam_role_policy" "ci" {
         Resource = "arn:aws:iam::${local.acct}:role/peach-sync-role"
       },
       {
+        Sid      = "OidcList"
+        Effect   = "Allow"
+        Action   = ["iam:ListOpenIDConnectProviders"]
+        Resource = "*"
+      },
+      {
+        Sid      = "OidcGet"
+        Effect   = "Allow"
+        Action   = ["iam:GetOpenIDConnectProvider"]
+        Resource = "arn:aws:iam::${local.acct}:oidc-provider/token.actions.githubusercontent.com"
+      },
+      {
+        Sid    = "CiRoleSelfRead"
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole", "iam:ListRolePolicies", "iam:GetRolePolicy",
+          "iam:ListAttachedRolePolicies", "iam:ListInstanceProfilesForRole"
+        ]
+        Resource = "arn:aws:iam::${local.acct}:role/peach-ci"
+      },
+      {
         Sid       = "PassLambdaRole"
         Effect    = "Allow"
         Action    = "iam:PassRole"
