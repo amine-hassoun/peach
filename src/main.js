@@ -119,7 +119,32 @@ function staysCard(today) {
 
 let persistence = null;
 
+function showFatal(err) {
+  app.innerHTML = `<div class="card">
+    <h2>Something went wrong</h2>
+    <pre id="fatal" style="white-space:pre-wrap;font-size:12px"></pre>
+    <button class="btn" id="reset-local">Reset local data</button>
+  </div>`;
+  document.getElementById('fatal').textContent = String(err?.stack || err);
+  document.getElementById('reset-local').onclick = () => {
+    localStorage.clear();
+    location.reload();
+  };
+}
+
 function render() {
+  try {
+    renderApp();
+  } catch (e) {
+    console.error(e);
+    showFatal(e);
+  }
+}
+
+window.addEventListener('error', (e) => showFatal(e.error || e.message));
+window.addEventListener('unhandledrejection', (e) => showFatal(e.reason));
+
+function renderApp() {
   persistence?.changed();
   persistence.changed();
   const today = localISO();
