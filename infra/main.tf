@@ -80,6 +80,7 @@ resource "aws_lambda_function" "sync" {
     variables = {
       TABLE_NAME   = aws_dynamodb_table.stays.name
       TOKEN_SHA256 = var.token_sha256
+      OPEN_ACCESS = "true"
     }
   }
 

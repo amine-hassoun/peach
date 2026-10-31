@@ -38,12 +38,12 @@ function setup(srv, { online = true } = {}) {
 beforeEach(() => localStorage.clear());
 
 describe('persistence', () => {
-  it('reports nolink without a token and makes no requests', async () => {
+  it('still syncs without a token (open access mode)', async () => {
     const srv = fakeServer();
     const { p } = setup(srv);
     await p.syncNow();
-    expect(p.status()).toBe('nolink');
-    expect(srv.calls).toEqual([]);
+    expect(srv.calls.length).toBeGreaterThan(0);
+    expect(p.status()).not.toBe('nolink');
   });
 
   it('pushes a local change and stores the version', async () => {

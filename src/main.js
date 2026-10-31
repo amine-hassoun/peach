@@ -117,7 +117,10 @@ function staysCard(today) {
   </section>`;
 }
 
+let persistence = null;
+
 function render() {
+  persistence?.changed();
   persistence.changed();
   const today = localISO();
   const sum = summarize(state.stays, today);
@@ -270,7 +273,7 @@ document.addEventListener('visibilitychange', () => {
 
 captureTokenFromHash(); // before any rendering
 
-const persistence = startPersistence({
+persistence = startPersistence({
   getStays: () => state.stays,
   setStays: (s) => { state.stays = s; render(); },
 });

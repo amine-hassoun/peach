@@ -52,9 +52,13 @@ export function startPersistence({
   }
 
   async function request(method, body) {
+    const token = getToken(storage);
     const res = await fetchImpl(API, {
       method,
-      headers: { 'x-peach-token': getToken(storage), ...(body ? { 'content-type': 'application/json' } : {}) },
+      headers: {
+        ...(token ? { 'x-peach-token': token } : {}), // open access: no token needed
+        ...(body ? { 'content-type': 'application/json' } : {}),
+      },
       body: body ? JSON.stringify(body) : undefined,
       cache: 'no-store',
     });
@@ -68,7 +72,6 @@ export function startPersistence({
   }
 
   async function run() {
-    if (!getToken(storage)) return setStatus('nolink');
     if (win?.navigator?.onLine === false) return setStatus('offline');
     setStatus('syncing');
     try {
