@@ -29,3 +29,4 @@ infra/peach-sync.zip
 infra/*.tfstate*
 infra/*.tfvars
 infra/tfplan
+*:Zone.Identifier

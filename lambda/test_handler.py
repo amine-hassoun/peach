@@ -144,6 +144,12 @@ class HandlerTests(unittest.TestCase):
         self.assertTrue(r["isBase64Encoded"])
         self.assertEqual(base64.b64decode(r["body"]), b"\x89PNG\r\n")
 
+    def test_static_webp_content_type(self):
+        (Path(self.tmp.name) / "scene.webp").write_bytes(b"RIFF")
+        r = h.handler(ev(path="/scene.webp"))
+        self.assertEqual(r["headers"]["content-type"], "image/webp")
+        self.assertTrue(r["isBase64Encoded"])
+
     def test_static_post_405(self):
         self.assertEqual(h.handler(ev("POST", path="/"))["statusCode"], 405)
 

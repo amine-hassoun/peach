@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="72" height="40" viewBox="0 0 72 40" role="img" aria-label="Airplane icon">
+  <g transform="translate(36 20) rotate(45) scale(1.5) translate(-12 -12)" fill="#8A9A6B">
+    <path d="M12 2C13.1 2 13.7 3 13.7 4.3V9.2L22 14.2V16.5L13.7 13.9V18.6L16.2 20.4V22.2L12 21L7.8 22.2V20.4L10.3 18.6V13.9L2 16.5V14.2L10.3 9.2V4.3C10.3 3 10.9 2 12 2Z"/>
+  </g>
+  <g stroke="#F4A58F" stroke-width="2.2" stroke-linecap="round" fill="none">
+    <path d="M8 26L12 28"/><path d="M5 33L10 33"/><path d="M60 11L64 13"/><path d="M58 17L63 15"/>
+  </g>
+</svg>
