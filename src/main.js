@@ -15,6 +15,7 @@ import { mountPlanner } from './ui/planner.js';
 import { registerSW } from './pwa.js';
 import './ui/extra.css';
 import './ui/scenic.css';
+import './ui/branding.css';
 
 const app = document.getElementById('app');
 const dialog = document.getElementById('stay-dialog');
@@ -28,11 +29,11 @@ const state = { stays: [], theme: null, undoId: null };
 let editingId = null;
 let undoTimer = null;
 
-const LOGO = `<svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+const LOGO = `<svg class="logo logo--svg" viewBox="0 0 48 48" aria-hidden="true">
   <path d="M24 12c-9 0-16 7-16 15 0 8 6 14 16 14s16-6 16-14c0-8-7-15-16-15z" fill="#FFB4A2"/>
   <path d="M24 12c-5 3-8 8-8 14" stroke="#E5989B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
   <path d="M24 12c0-5 3-8 8-8-1 5-3 8-8 8z" fill="#7BC4A4"/>
-</svg>`;
+</svg><span class="logo logo--plush" aria-hidden="true"></span>`;
 
 // ---------- rendering ----------
 
