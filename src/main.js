@@ -66,6 +66,7 @@ function heroCard(sum, today) {
         ${hint ? `<p class="muted">${esc(hint)}</p>` : ''}
       </div>
     </div>
+    ${checkinBlock()}
     ${releaseBlock(today)}
   </section>`;
 }
@@ -86,6 +87,21 @@ function stayRow(s, today) {
       <button class="btn btn--ghost btn--small" data-action="delete" data-id="${esc(s.id)}">${t('stays.delete')}</button>
     </div>
   </li>`;
+}
+
+// One-tap check-in: arriving opens a stay today, leaving closes the open one.
+function checkinBlock() {
+  const open = state.stays.filter((s) => !s.deleted && !s.exit);
+  if (!open.length) {
+    return `<div class="hero__checkin">
+      <button class="btn" data-action="arrive">${esc(t('checkin.arrive'))}</button>
+    </div>`;
+  }
+  const since = open.map((s) => s.entry).sort()[0];
+  return `<div class="hero__checkin">
+    <p class="muted">${esc(t('checkin.since', { date: formatDate(since, 'medium') }))}</p>
+    <button class="btn" data-action="leave">${esc(t('checkin.leave'))}</button>
+  </div>`;
 }
 
 // When the next days leave the 180-day window, and how many come back (assuming no new stays).
@@ -245,6 +261,28 @@ dialog.addEventListener('click', (e) => {
 
 // ---------- actions ----------
 
+function arrive() {
+  state.stays.push({
+    id: crypto.randomUUID(),
+    entry: localISO(),
+    exit: null,
+    note: '',
+    updatedAt: new Date().toISOString(),
+    deleted: false,
+  });
+  render();
+}
+
+function leave() {
+  const today = localISO();
+  const now = new Date().toISOString();
+  for (const s of state.stays) {
+    if (s.deleted || s.exit) continue;
+    Object.assign(s, { exit: today < s.entry ? s.entry : today, updatedAt: now });
+  }
+  render();
+}
+
 function deleteStay(id) {
   const s = state.stays.find((x) => x.id === id);
   if (!s) return;
@@ -290,6 +328,8 @@ document.addEventListener('click', (e) => {
   else if (action === 'edit') openForm(id);
   else if (action === 'delete') deleteStay(id);
   else if (action === 'undo') undoDelete();
+  else if (action === 'arrive') arrive();
+  else if (action === 'leave') leave();
   else if (action === 'toggle-theme') toggleTheme();
   else if (action === 'toggle-lang') toggleLang();
   else if (action === 'close-form') dialog.close();

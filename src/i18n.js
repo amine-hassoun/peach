@@ -95,6 +95,9 @@ export const messages = {
     'trips.exitHint': 'Leave empty to see the longest stay possible.',
     'trips.notePlaceholder': 'e.g. Summer in Lisbon',
     'trips.from': 'From {date}',
+    'checkin.arrive': "I've arrived in Schengen",
+    'checkin.leave': "I've left Schengen",
+    'checkin.since': "You're in Schengen since {date}",
   },
 
   ka: {
@@ -190,6 +193,9 @@ export const messages = {
     'trips.exitHint': 'დატოვე ცარიელი, რომ ნახო მაქსიმალური ხანგრძლივობა.',
     'trips.notePlaceholder': 'მაგ. ზაფხული ლისაბონში',
     'trips.from': '{date}-დან',
+    'checkin.arrive': 'შენგენში ჩამოვედი',
+    'checkin.leave': 'შენგენი დავტოვე',
+    'checkin.since': 'შენგენში ხარ {date}-დან',
   },
 };
 

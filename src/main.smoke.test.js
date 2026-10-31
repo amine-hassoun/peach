@@ -89,6 +89,17 @@ describe('peach UI', () => {
     expect($('.gauge__num').textContent).toBe('80');
     expect($$('.stay').length).toBe(2);
   });
+
+  it('leave closes the open stay today; arrive opens a new one', () => {
+    expect($('[data-action="arrive"]')).toBeNull();
+    click($('[data-action="leave"]'));
+    expect($('[data-action="leave"]')).toBeNull();
+    expect($$('.stay__range').map((e) => e.textContent)).toContain('10 Oct 2026 – 12 Oct 2026');
+    click($('[data-action="arrive"]'));
+    expect($('[data-action="leave"]')).not.toBeNull();
+    expect($('.hero__checkin .muted').textContent).toContain('12 Oct 2026');
+    expect($$('.stay').length).toBe(3);
+  });
 });
 
 function $$(sel) {
