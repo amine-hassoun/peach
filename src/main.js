@@ -14,6 +14,7 @@ import { startPersistence } from './lib/persistence.js';
 import { mountPlanner } from './ui/planner.js';
 import { registerSW } from './pwa.js';
 import './ui/extra.css';
+import './ui/scenic.css';
 
 const app = document.getElementById('app');
 const dialog = document.getElementById('stay-dialog');
@@ -313,6 +314,15 @@ function toggleTheme() {
   const isDark = (state.theme ?? (systemDark ? 'dark' : 'light')) === 'dark';
   state.theme = isDark ? 'light' : 'dark';
   document.documentElement.dataset.theme = state.theme;
+  syncScenic();
+}
+
+// The peach scenery is for light mode on wide screens only (see ui/scenic.css).
+function syncScenic() {
+  const wide = window.matchMedia('(min-width: 1100px)').matches;
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const dark = (state.theme ?? (systemDark ? 'dark' : 'light')) === 'dark';
+  document.documentElement.classList.toggle('scenic', wide && !dark);
 }
 
 function toggleLang() {
@@ -350,6 +360,10 @@ planner = mountPlanner(plannerEl, {
   getStays: () => state.stays, today: localISO, t, tn, formatDate, dialog: tripDialog,
 });
 registerSW();
+
+window.addEventListener('resize', syncScenic);
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', syncScenic);
+syncScenic();
 
 setLang(detectLang());
 render();

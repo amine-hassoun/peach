@@ -100,6 +100,23 @@ describe('peach UI', () => {
     expect($('.hero__checkin .muted').textContent).toContain('12 Oct 2026');
     expect($$('.stay').length).toBe(3);
   });
+  
+  it('scenery is light mode + wide screens only', () => {
+    const root = document.documentElement;
+    expect(root.classList.contains('scenic')).toBe(false); // narrow by default
+    // Pretend the window is wide and the system is light.
+    window.matchMedia = (q) => ({ matches: q.includes('min-width') });
+    window.dispatchEvent(new Event('resize'));
+    expect(root.classList.contains('scenic')).toBe(true);
+    click($('[data-action="toggle-theme"]')); // -> dark
+    expect(root.classList.contains('scenic')).toBe(false);
+    click($('[data-action="toggle-theme"]')); // -> light again
+    expect(root.classList.contains('scenic')).toBe(true);
+    // Narrow window: no scenery even in light mode.
+    window.matchMedia = () => ({ matches: false });
+    window.dispatchEvent(new Event('resize'));
+    expect(root.classList.contains('scenic')).toBe(false);
+  });
 });
 
 function $$(sel) {

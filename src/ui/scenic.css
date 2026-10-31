@@ -1,0 +1,83 @@
+/* Light mode on wide screens only: the peach "scenery" look.
+   Everything is gated on html.scenic, which main.js sets only when the effective
+   theme is light AND the window is at least 1100px wide. Dark mode and mobile
+   never get this class, so they keep the original design untouched. */
+
+.scenery { display: none; }
+
+html.scenic body {
+  background:
+    radial-gradient(70% 45% at 50% 0%, #fff7f1 0%, rgba(255, 247, 241, 0) 70%),
+    linear-gradient(180deg, #fdf1e9 0%, #fce8dc 55%, #fbe1d2 100%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+/* Fixed backdrop on both sides of the card column. Each SVG already contains its
+   clouds, landmark, sprigs and the plush / cat, so they scale together. */
+html.scenic .scenery {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+html.scenic .scenery__side {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(50vw - 240px); /* the card column is 560px wide, so 24px tucks behind the cards */
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+html.scenic .scenery__side--left {
+  left: 0;
+  background-image: url('./scenery/left.svg');
+  background-position: right bottom;
+}
+html.scenic .scenery__side--right {
+  right: 0;
+  background-image: url('./scenery/right.svg');
+  background-position: left bottom;
+}
+
+html.scenic #app {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header: a hairline across the full page width, like the mockup. */
+html.scenic .topbar {
+  position: relative;
+  padding-bottom: 12px;
+}
+html.scenic .topbar::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 100vw;
+  height: 1px;
+  background: rgba(224, 170, 150, 0.35);
+  transform: translateX(-50%);
+}
+html.scenic .btn--ghost {
+  background-color: rgba(255, 255, 255, 0.7);
+  border-color: #f0d3c5;
+}
+
+/* Cards: softer, rounder, slightly see-through. */
+html.scenic .card {
+  background-color: rgba(255, 252, 249, 0.93);
+  border-radius: 28px;
+  box-shadow: 0 12px 34px rgba(196, 120, 98, 0.14);
+  backdrop-filter: blur(6px);
+}
+
+/* Little paper plane in the trip planner header. */
+html.scenic #planner {
+  background-image: url('./scenery/plane.svg');
+  background-repeat: no-repeat;
+  background-position: 54% 12px;
+  background-size: 56px auto;
+}
