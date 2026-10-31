@@ -80,6 +80,7 @@ jobs:
         run: pip install checkov && checkov --config-file .checkov.yaml
 
       - name: Plan
+        shell: bash
         run: terraform plan -input=false -no-color -out=tfplan | tee plan.txt
 
       - name: Plan to job summary
