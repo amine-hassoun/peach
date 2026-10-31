@@ -17,7 +17,6 @@ import './ui/extra.css';
 const app = document.getElementById('app');
 const dialog = document.getElementById('stay-dialog');
 const plannerEl = document.getElementById('planner');
-plannerEl?.classList.add('card');
 
 // In-memory for now: Step 4 adds localStorage, Step 7 adds sync.
 // Each stay: { id, entry, exit | null, note, updatedAt, deleted }
@@ -146,6 +145,7 @@ function renderApp() {
     <main>
       ${heroCard(sum)}
       ${staysCard(today)}
+      <div id="planner-slot"></div>
     </main>
     ${
       state.undoId
@@ -284,7 +284,6 @@ persistence = startPersistence({
 mountPlanner(document.getElementById('planner'), {
   getStays: () => state.stays, today: localISO, maxStay, t, formatDate,
 });
-plannerEl.classList.add('card');
 registerSW();
 
 setLang(detectLang());
