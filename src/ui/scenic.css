@@ -13,20 +13,28 @@ html.scenic body {
   overflow-x: hidden;
 }
 
-/* Fixed backdrop on both sides of the card column. Each SVG already contains its
-   clouds, landmark, sprigs and the plush / cat, so they scale together. */
+/* The scenery is a fixed layer on each side of the card column. Soft clouds and bushes
+   are one small SVG per side; every other piece (tower, plush, cat, ...) is its own
+   element, sized and placed from the card column outwards.
+
+   --u is the scene unit: 1vh on a normal window, but it shrinks when the side gutters
+   get narrow, so the pieces scale together and never run under the cards.
+   (Designed at 1536x1024, where 1u = 10.24px.) */
 html.scenic .scenery {
+  --edge: 264px; /* half of the card column */
+  --u: min(1vh, calc((50vw - 240px) / 51.6));
   display: block;
   position: fixed;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
 }
 html.scenic .scenery__side {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: calc(50vw - 240px); /* the card column is 560px wide, so 24px tucks behind the cards */
+  width: calc(50vw - var(--edge));
   background-repeat: no-repeat;
   background-size: cover;
 }
@@ -39,6 +47,103 @@ html.scenic .scenery__side--right {
   right: 0;
   background-image: url('./scenery/right.svg');
   background-position: left bottom;
+}
+
+/* One decoration. Offsets below are in scene units from the edge of the card column. */
+html.scenic .sc {
+  position: absolute;
+  display: block;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+}
+
+/* ---- left: Paris + the peach ---- */
+html.scenic .sc--tower {
+  background-image: url('./scenery/eiffel_tower.svg');
+  width: calc(17.2 * var(--u));
+  height: calc(28.1 * var(--u));
+  right: calc(22.4 * var(--u));
+  bottom: calc(52.8 * var(--u));
+  opacity: 0.5;
+}
+html.scenic .scenery__side--left .sc--sparks {
+  background-image: url('./scenery/sparks-coral.svg');
+  width: calc(5.7 * var(--u));
+  height: calc(7 * var(--u));
+  right: calc(39.6 * var(--u));
+  bottom: calc(51.6 * var(--u));
+}
+html.scenic .sc--plush {
+  background-image: url('./scenery/peach_plushie.webp');
+  width: calc(40 * var(--u));
+  height: calc(42.2 * var(--u));
+  right: calc(3 * var(--u));
+  bottom: calc(17.6 * var(--u));
+}
+html.scenic .sc--plush::before { /* soft shadow on the ground */
+  content: '';
+  position: absolute;
+  left: -8%;
+  right: -8%;
+  bottom: calc(-0.4 * var(--u));
+  height: calc(4.5 * var(--u));
+  background: radial-gradient(closest-side, rgba(217, 154, 133, 0.38), rgba(217, 154, 133, 0));
+  z-index: -1;
+}
+html.scenic .scenery__side--left .sc--sprig {
+  background-image: url('./scenery/sprig.svg');
+  width: calc(8.5 * var(--u));
+  height: calc(12.75 * var(--u));
+  right: calc(39 * var(--u));
+  bottom: calc(17 * var(--u));
+  transform: rotate(-20deg);
+}
+
+/* ---- right: Rome + the cat ---- */
+html.scenic .sc--colosseum {
+  background-image: url('./scenery/colosseum.svg');
+  width: calc(26 * var(--u));
+  height: calc(19.05 * var(--u));
+  left: calc(25.5 * var(--u));
+  bottom: calc(51 * var(--u));
+  opacity: 0.55;
+}
+html.scenic .sc--heart {
+  background-image: url('./scenery/heart_doodle.svg');
+  width: calc(8 * var(--u));
+  height: calc(8 * var(--u));
+  left: calc(17 * var(--u));
+  bottom: calc(60.5 * var(--u));
+}
+html.scenic .scenery__side--right .sc--sparks {
+  background-image: url('./scenery/sparks-sage.svg');
+  width: calc(6.2 * var(--u));
+  height: calc(6.2 * var(--u));
+  left: calc(7.8 * var(--u));
+  bottom: calc(47.3 * var(--u));
+}
+html.scenic .sc--cushion {
+  background-image: url('./scenery/cushion.svg');
+  width: calc(62 * var(--u));
+  height: calc(31 * var(--u));
+  left: calc(-4 * var(--u));
+  bottom: calc(-6.5 * var(--u));
+}
+html.scenic .sc--cat {
+  background-image: url('./scenery/cat_with_sheep.webp');
+  width: calc(54 * var(--u));
+  height: calc(48.1 * var(--u));
+  left: calc(-2.5 * var(--u));
+  bottom: calc(4.8 * var(--u));
+}
+html.scenic .scenery__side--right .sc--sprig {
+  background-image: url('./scenery/sprig.svg');
+  width: calc(6.8 * var(--u));
+  height: calc(10.2 * var(--u));
+  left: calc(38.5 * var(--u));
+  bottom: calc(3.8 * var(--u));
+  transform: rotate(14deg);
 }
 
 html.scenic #app {
@@ -76,8 +181,8 @@ html.scenic .card {
 
 /* Little paper plane in the trip planner header. */
 html.scenic #planner {
-  background-image: url('./scenery/plane.svg');
+  background-image: url('./scenery/airplane.svg');
   background-repeat: no-repeat;
-  background-position: 54% 12px;
-  background-size: 56px auto;
+  background-position: 50% 24px;
+  background-size: 84px auto;
 }
