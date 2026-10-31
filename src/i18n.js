@@ -4,7 +4,7 @@
 export const messages = {
   en: {
     'app.name': 'peach',
-    'app.tagline': 'Your Schengen days, made easy',
+    'app.tagline': 'Schengen days for iri 🥰',
 
     'hero.stayUntil': 'You can stay until',
     'hero.enterToday': 'If you arrive today, you can stay until',

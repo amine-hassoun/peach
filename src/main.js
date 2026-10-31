@@ -2,26 +2,22 @@ import './style.css';
 import '@fontsource-variable/quicksand';
 import '@fontsource-variable/nunito';
 
-import { summarize, maxStay, toDay, toISO, LIMIT, WINDOW } from './lib/schengen.js';
+import { summarize, maxStay, toDay, LIMIT } from './lib/schengen.js';
 import { localISO } from './lib/today.js';
 import { validateStay } from './lib/validate.js';
 import { esc } from './lib/html.js';
 import { t, tn, setLang, getLang, detectLang, formatDate } from './i18n.js';
 import { renderGauge } from './ui/gauge.js';
-import { renderTimeline } from './ui/timeline.js';
 import { captureTokenFromHash } from './lib/store.js';
 import { startPersistence } from './lib/persistence.js';
 import { mountPlanner } from './ui/planner.js';
-import { mountSettings } from './ui/settings.js';
 import { registerSW } from './pwa.js';
 import './ui/extra.css';
 
-// Official calculator, linked from the footer. Kept in one place so it is easy to update.
-const EC_URL =
-  'https://home-affairs.ec.europa.eu/policies/schengen/border-crossing/short-stay-calculator-new-version_en';
-
 const app = document.getElementById('app');
 const dialog = document.getElementById('stay-dialog');
+const plannerEl = document.getElementById('planner');
+plannerEl?.classList.add('card');
 
 // In-memory for now: Step 4 adds localStorage, Step 7 adds sync.
 // Each stay: { id, entry, exit | null, note, updatedAt, deleted }
@@ -66,20 +62,6 @@ function heroCard(sum) {
       <p class="hero__main">${esc(main)}</p>
       ${hint ? `<p class="muted">${esc(hint)}</p>` : ''}
     </div>
-  </section>`;
-}
-
-function timelineCard(today) {
-  const startISO = toISO(toDay(today) - (WINDOW - 1));
-  return `<section class="card">
-    <h2>${t('timeline.title')}</h2>
-    ${renderTimeline({
-      stays: state.stays,
-      todayISO: today,
-      startLabel: esc(formatDate(startISO, 'medium')),
-      todayLabel: esc(t('timeline.today')),
-      aria: esc(t('timeline.aria')),
-    })}
   </section>`;
 }
 
@@ -163,19 +145,16 @@ function renderApp() {
     </header>
     <main>
       ${heroCard(sum)}
-      ${timelineCard(today)}
       ${staysCard(today)}
     </main>
-    <footer class="footer">
-      <p class="muted">${t('footer.disclaimer')}</p>
-      <a href="${EC_URL}" target="_blank" rel="noopener noreferrer">${t('footer.official')}</a>
-    </footer>
     ${
       state.undoId
         ? `<div class="toast" role="status"><span>${t('stays.deleted')}</span>
            <button class="btn btn--ghost btn--small" data-action="undo">${t('stays.undo')}</button></div>`
         : ''
     }`;
+  const slot = document.getElementById('planner-slot');
+  if (slot && plannerEl) slot.replaceWith(plannerEl);
 }
 
 // ---------- add / edit form ----------
@@ -305,9 +284,7 @@ persistence = startPersistence({
 mountPlanner(document.getElementById('planner'), {
   getStays: () => state.stays, today: localISO, maxStay, t, formatDate,
 });
-mountSettings(document.getElementById('settings'), {
-  persistence, t, origin: location.origin,
-});
+plannerEl.classList.add('card');
 registerSW();
 
 setLang(detectLang());
