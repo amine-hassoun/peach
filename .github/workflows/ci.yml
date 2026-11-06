@@ -25,7 +25,7 @@ jobs:
       - run: npm ci
       - run: npm test -- --run
       - run: npm run build
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - run: pip install boto3
